@@ -23,6 +23,8 @@ import android.os.Vibrator;
 import android.util.Log;
 import android.widget.Toast;
 
+import android.media.AudioAttributes;
+
 import androidx.core.app.NotificationCompat;
 
 import com.facebook.react.bridge.WritableMap;
@@ -31,10 +33,14 @@ import com.facebook.react.bridge.WritableNativeMap;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
+
+import java.io.StringWriter;
+import java.io.PrintWriter;
 
 import static com.emekalites.react.alarm.notification.Constants.ADD_INTENT;
 import static com.emekalites.react.alarm.notification.Constants.NOTIFICATION_ACTION_DISMISS;
@@ -45,7 +51,7 @@ class AlarmUtil {
 
     private Context mContext;
     private AudioInterface audioInterface;
-    static final long[] DEFAULT_VIBRATE_PATTERN = {0, 250, 250, 250};
+    static final long[] DEFAULT_VIBRATE_PATTERN = { 0, 250, 250, 250 };
 
     AlarmUtil(Application context) {
         mContext = context;
@@ -80,12 +86,14 @@ class AlarmUtil {
     }
 
     private void playAlarmSound(String name, String names, boolean shouldLoop, double volume) {
+        Log.d("ReactNative", "Alarm play sound");
         float number = (float) volume;
 
         MediaPlayer mediaPlayer = audioInterface.getSingletonMedia(name, names);
         mediaPlayer.setLooping(shouldLoop);
         mediaPlayer.setVolume(number, number);
         mediaPlayer.start();
+        Log.d("ReactNative", "mediaPlayer: " + mediaPlayer.toString());
 
         mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
@@ -103,9 +111,12 @@ class AlarmUtil {
     }
 
     boolean checkAlarm(ArrayList<AlarmModel> alarms, AlarmModel alarm) {
+        Log.d("ReactNative", "Alarm checkAlarm");
         boolean contain = false;
         for (AlarmModel aAlarm : alarms) {
-            if (aAlarm.getHour() == alarm.getHour() && aAlarm.getMinute() == alarm.getMinute() && aAlarm.getDay() == alarm.getDay() && aAlarm.getMonth() == alarm.getMonth() && aAlarm.getYear() == alarm.getYear() && aAlarm.getActive() == 1) {
+            if (aAlarm.getHour() == alarm.getHour() && aAlarm.getMinute() == alarm.getMinute()
+                    && aAlarm.getDay() == alarm.getDay() && aAlarm.getMonth() == alarm.getMonth()
+                    && aAlarm.getYear() == alarm.getYear() && aAlarm.getActive() == 1) {
                 contain = true;
                 break;
             }
@@ -128,6 +139,7 @@ class AlarmUtil {
     }
 
     void setAlarm(AlarmModel alarm) {
+        Log.d("ReactNative", "Alarm setAlarm");
         Calendar calendar = getCalendarFromAlarm(alarm);
 
         Log.e(TAG, alarm.getAlarmId() + " - " + calendar.getTime().toString());
@@ -164,6 +176,7 @@ class AlarmUtil {
     }
 
     void snoozeAlarm(AlarmModel alarm) {
+        Log.d("ReactNative", "Alarm snoozeAlarm");
         Calendar calendar = getCalendarFromAlarm(alarm);
 
         this.stopAlarmSound();
@@ -231,6 +244,7 @@ class AlarmUtil {
     }
 
     void doCancelAlarm(int id) {
+        Log.d("ReactNative", "Alarm doCancelAlarm");
         try {
             AlarmModel alarm = getAlarmDB().getAlarm(id);
             this.cancelAlarm(alarm, false);
@@ -240,6 +254,7 @@ class AlarmUtil {
     }
 
     void deleteAlarm(int id) {
+        Log.d("ReactNative", "Alarm doCancelAlarm");
         try {
             AlarmModel alarm = getAlarmDB().getAlarm(id);
             this.cancelAlarm(alarm, true);
@@ -262,6 +277,7 @@ class AlarmUtil {
     }
 
     void cancelAlarm(AlarmModel alarm, boolean delete) {
+        Log.d("ReactNative", "Alarm cancelAlarm");
         String scheduleType = alarm.getScheduleType();
         if (scheduleType.equals("once") || delete) {
             this.stopAlarm(alarm);
@@ -269,12 +285,14 @@ class AlarmUtil {
     }
 
     void stopAlarm(AlarmModel alarm) {
+        Log.d("ReactNative", "Alarm stopAlarm");
         AlarmManager alarmManager = this.getAlarmManager();
 
         int alarmId = alarm.getAlarmId();
 
         Intent intent = new Intent(mContext, AlarmReceiver.class);
-        PendingIntent alarmIntent = PendingIntent.getBroadcast(mContext, alarmId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent alarmIntent = PendingIntent.getBroadcast(mContext, alarmId, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT);
         alarmManager.cancel(alarmIntent);
 
         getAlarmDB().delete(alarm.getId());
@@ -332,6 +350,7 @@ class AlarmUtil {
     }
 
     void sendNotification(AlarmModel alarm) {
+        Log.d("ReactNative", "Alarm sendNotification");
         try {
             Class intentClass = getMainActivityClass();
 
@@ -342,7 +361,8 @@ class AlarmUtil {
 
             boolean playSound = alarm.isPlaySound();
             if (playSound) {
-                this.playAlarmSound(alarm.getSoundName(), alarm.getSoundNames(), alarm.isLoopSound(), alarm.getVolume());
+                this.playAlarmSound(alarm.getSoundName(), alarm.getSoundNames(), alarm.isLoopSound(),
+                        alarm.getVolume());
             }
 
             NotificationManager mNotificationManager = getNotificationManager();
@@ -372,7 +392,7 @@ class AlarmUtil {
             Resources res = mContext.getResources();
             String packageName = mContext.getPackageName();
 
-            //icon
+            // icon
             int smallIconResId;
             String smallIcon = alarm.getSmallIcon();
             if (smallIcon != null && !smallIcon.equals("")) {
@@ -395,7 +415,8 @@ class AlarmUtil {
                 intent.putExtras(bundle);
             }
 
-            PendingIntent pendingIntent = PendingIntent.getActivity(mContext, notificationID, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent pendingIntent = PendingIntent.getActivity(mContext, notificationID, intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT);
 
             NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(mContext, channelID)
                     .setSmallIcon(smallIconResId)
@@ -411,10 +432,12 @@ class AlarmUtil {
 
             long vibration = (long) alarm.getVibration();
 
-            long[] vibrationPattern = vibration == 0 ? DEFAULT_VIBRATE_PATTERN : new long[]{0, vibration, 1000, vibration};
+            long[] vibrationPattern = vibration == 0 ? DEFAULT_VIBRATE_PATTERN
+                    : new long[] { 0, vibration, 1000, vibration };
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                NotificationChannel mChannel = new NotificationChannel(channelID, "Alarm Notify", NotificationManager.IMPORTANCE_HIGH);
+                NotificationChannel mChannel = new NotificationChannel(channelID, "Alarm Notify",
+                        NotificationManager.IMPORTANCE_HIGH);
                 mChannel.enableLights(true);
 
                 String color = alarm.getColor();
@@ -422,7 +445,7 @@ class AlarmUtil {
                     mChannel.setLightColor(Color.parseColor(color));
                 }
 
-                if(!mChannel.canBypassDnd()){
+                if (!mChannel.canBypassDnd()) {
                     mChannel.setBypassDnd(alarm.isBypassDnd());
                 }
 
@@ -443,7 +466,7 @@ class AlarmUtil {
                 mBuilder.setVibrate(alarm.isVibrate() ? vibrationPattern : null);
             }
 
-            //color
+            // color
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 String color = alarm.getColor();
                 if (color != null && !color.equals("")) {
@@ -457,24 +480,28 @@ class AlarmUtil {
                 Intent dismissIntent = new Intent(mContext, AlarmReceiver.class);
                 dismissIntent.setAction(NOTIFICATION_ACTION_DISMISS);
                 dismissIntent.putExtra("AlarmId", alarm.getId());
-                PendingIntent pendingDismiss = PendingIntent.getBroadcast(mContext, notificationID, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-                NotificationCompat.Action dismissAction = new NotificationCompat.Action(android.R.drawable.ic_lock_idle_alarm, "DISMISS", pendingDismiss);
+                PendingIntent pendingDismiss = PendingIntent.getBroadcast(mContext, notificationID, dismissIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT);
+                NotificationCompat.Action dismissAction = new NotificationCompat.Action(
+                        android.R.drawable.ic_lock_idle_alarm, "DISMISS", pendingDismiss);
                 mBuilder.addAction(dismissAction);
 
                 Intent snoozeIntent = new Intent(mContext, AlarmReceiver.class);
                 snoozeIntent.setAction(NOTIFICATION_ACTION_SNOOZE);
                 snoozeIntent.putExtra("SnoozeAlarmId", alarm.getId());
-                PendingIntent pendingSnooze = PendingIntent.getBroadcast(mContext, notificationID, snoozeIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-                NotificationCompat.Action snoozeAction = new NotificationCompat.Action(R.drawable.ic_snooze, "SNOOZE", pendingSnooze);
+                PendingIntent pendingSnooze = PendingIntent.getBroadcast(mContext, notificationID, snoozeIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT);
+                NotificationCompat.Action snoozeAction = new NotificationCompat.Action(R.drawable.ic_snooze, "SNOOZE",
+                        pendingSnooze);
                 mBuilder.addAction(snoozeAction);
             }
 
-            //use big text
+            // use big text
             if (alarm.isUseBigText()) {
                 mBuilder = mBuilder.setStyle(new NotificationCompat.BigTextStyle().bigText(message));
             }
 
-            //large icon
+            // large icon
             String largeIcon = alarm.getLargeIcon();
             if (largeIcon != null && !largeIcon.equals("") && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 int largeIconResId = res.getIdentifier(largeIcon, "mipmap", packageName);

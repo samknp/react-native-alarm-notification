@@ -5,15 +5,11 @@
 
 ## Installing (React Native >= 0.60.0)
 
-```sh
-npm install react-native-alarm-notification --save
-```
+`npm install react-native-alarm-notification --save`
 
 or
 
-```sh
-yarn add react-native-alarm-notification
-```
+`yarn add react-native-alarm-notification`
 
 If you are using react-native version 0.60 or higher you don't need to link [react-native-alarm-notification](https://github.com/emekalites/react-native-alarm-notification). The package is automatically linked when building the app. All you need to do after installing package is:
 
@@ -35,9 +31,6 @@ For android, the package will be linked automatically on build.
 
 If your app crashes on **Android**, it could probably mean auto linking didn't work. You will need to make the following changes:
 
-<details>
-    <summary>Show steps</summary>
-
 **android/app/src/main/java/\<AppName\>/MainApplication.java**
 
 - add `import com.emekalites.react.alarm.notification.ANPackage;` on the imports section
@@ -56,33 +49,22 @@ include ':react-native-alarm-notification'
 project(':react-native-alarm-notification').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-alarm-notification/android')
 
 ```
-</details>
 
 ## Installing (React Native <= 0.59.x)
 
-<details>
-    <summary>Expand</summary>
-
-```sh
-npm install react-native-alarm-notification --save
-```
+`npm install react-native-alarm-notification --save`
 
 or
 
-```sh
-yarn add react-native-alarm-notification
-```
+`yarn add react-native-alarm-notification`
+
 Use `react-native link` to add the library to your project:
 
-```sh
+```
 react-native link react-native-alarm-notification
 ```
-</details>
 
 ## iOS manual Installation
-
-<details>
-    <summary>Expand</summary>
 
 **> In your `AppDelegate.h`**
 
@@ -151,12 +133,8 @@ To play sound in the background, make sure to add the following to the `Info.pli
     <string>audio</string>
 </array>
 ```
-</details>
 
 ## Android manual Installation
-
-<details>
-    <summary>Expand</summary>
 
 **> In your `AndroidManifest.xml`**
 
@@ -197,8 +175,6 @@ To play sound in the background, make sure to add the following to the `Info.pli
         </receiver>
      .....
 ```
-</details>
-
 
 ## Alarm Notification Data
 

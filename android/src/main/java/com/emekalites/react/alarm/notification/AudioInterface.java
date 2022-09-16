@@ -1,3 +1,4 @@
+/* THIS FILE WAS HEAVILY MODIFIED FOR WakeMeApp */
 package com.emekalites.react.alarm.notification;
 
 import android.content.Context;
@@ -5,7 +6,10 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.provider.Settings;
 import android.util.Log;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -45,7 +49,7 @@ class AudioInterface {
         Log.e(TAG, "player: " + soundName + ", names: " + soundNames);
         if (player == null) {
             List<Integer> resIds = new ArrayList<Integer>();
-            if (soundNames != null && !soundNames.equals("")){
+            if (soundNames != null && !soundNames.equals("")) {
                 String[] names = soundNames.split(",");
                 for (String item : names) {
                     int _resId;
@@ -62,27 +66,57 @@ class AudioInterface {
 
             int resId;
             Log.e(TAG, "is null");
-            if (resIds.size() > 0) {
-                Random rand = new Random();
-                int n = rand.nextInt(resIds.size());
 
-                resId = resIds.get(n);
+            player = new MediaPlayer();
+            player.setAudioAttributes(new AudioAttributes.Builder()
+                    .setFlags(AudioAttributes.FLAG_AUDIBILITY_ENFORCED)
+                    .setLegacyStreamType(AudioManager.STREAM_ALARM)
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build());
 
-                player = MediaPlayer.create(get(), resId);
-            } else if (soundName != null && !soundName.equals("")) {
-                if (mContext.getResources().getIdentifier(soundName, "raw", mContext.getPackageName()) != 0) {
-                    resId = mContext.getResources().getIdentifier(soundName, "raw", mContext.getPackageName());
-                } else {
-                    soundName = soundName.substring(0, soundName.lastIndexOf('.'));
-                    resId = mContext.getResources().getIdentifier(soundName, "raw", mContext.getPackageName());
-                }
+            /*
+             * THIS COMMENTING MEANS THE PACKAGE WILL NOT WORK WITH MULTIPUL SOUNDS
+             * or user selected sounds, only default
+             * 
+             * 
+             * if (resIds.size() > 0) {
+             * Random rand = new Random();
+             * int n = rand.nextInt(resIds.size());
+             * 
+             * resId = resIds.get(n);
+             * 
+             * // player = MediaPlayer.create(get(), resId);
+             * player.setDataSource(get(), resId);
+             * } else
+             */
+            // if (soundName != null && !soundName.equals("")) {
+            // if (mContext.getResources().getIdentifier(soundName, "raw",
+            // mContext.getPackageName()) != 0) {
+            // resId = mContext.getResources().getIdentifier(soundName, "raw",
+            // mContext.getPackageName());
+            // } else {
+            // soundName = soundName.substring(0, soundName.lastIndexOf('.'));
+            // resId = mContext.getResources().getIdentifier(soundName, "raw",
+            // mContext.getPackageName());
+            // }
 
-                player = MediaPlayer.create(get(), resId);
-            } else {
-                player = MediaPlayer.create(get(), this.uri);
+            // // player = MediaPlayer.create(get(), resId);
+            // player.setDataSource(get(), resId);
+            // } else {
+            // player = MediaPlayer.create(get(), this.uri);
+            try {
+                player.setDataSource(get(), this.uri);
+            } catch (IOException e) {
+                Log.d("ReactNative", "setDataSource exception ");
             }
+            // }
         }
-
+        try {
+            player.prepare();
+        } catch (IOException e) {
+            Log.d("ReactNative", "setDataSource exception ");
+        }
         return player;
     }
 
