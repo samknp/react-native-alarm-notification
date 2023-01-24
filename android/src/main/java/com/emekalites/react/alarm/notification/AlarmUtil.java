@@ -346,7 +346,7 @@ class AlarmUtil {
     private PendingIntent createOnDismissedIntent(Context context, int notificationId) {
         Intent intent = new Intent(context, AlarmDismissReceiver.class);
         intent.putExtra(Constants.DISMISSED_NOTIFICATION_ID, notificationId);
-        return PendingIntent.getBroadcast(context.getApplicationContext(), notificationId, intent, 0);
+        return PendingIntent.getBroadcast(context.getApplicationContext(), notificationId, intent, PendingIntent.FLAG_IMMUTABLE);
     }
 
     void sendNotification(AlarmModel alarm) {
@@ -416,7 +416,7 @@ class AlarmUtil {
             }
 
             PendingIntent pendingIntent = PendingIntent.getActivity(mContext, notificationID, intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT);
+                    PendingIntent.FLAG_IMMUTABLE);
 
             NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(mContext, channelID)
                     .setSmallIcon(smallIconResId)
