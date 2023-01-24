@@ -46,6 +46,11 @@ public class ANModule extends ReactContextBaseJavaModule {
         return "RNAlarmNotification";
     }
 
+    @Override    
+    public boolean canOverrideExistingModule() {        
+        return true;    
+    } 
+
     private AlarmDatabase getAlarmDB() {
         return new AlarmDatabase(mReactContext);
     }
